@@ -24,6 +24,7 @@ contract Reservation {
     }
 
     mapping(address => User) public users;
+    uint256 public usersCount;
     mapping(string => uint256) public companyBookingsCount;
     mapping(uint256 => Booking) public bookings;
     uint256 public bookingsCount;
@@ -75,10 +76,11 @@ contract Reservation {
     constructor() {
         bookingsCount = 0;
         roomsCount = 0;
+        usersCount = 0;
 
         // NOTE: We assume that exists an external service registering users.
-        createUser(0, 0x4e3F2D1f69A57dccC74A72733BB91E06e720E97f, "CocaCola");
-        createUser(0, 0xb5324BdCdcDa6829361209d746631bcCCeD2f1f6, "PepsiCola");
+        createUser(0, 0x2cDB90d0F33FDE3c8802B021452cCfe5e1d25574, "CocaCola");
+        createUser(1, 0xa4387a7E4e854DA0c83ADCC9514eBe581DCe85D4, "PepsiCola");
 
         for (uint256 i = 0; i < maxRooms; i++) {
             addRoom(append("Room ", toString(i)));
@@ -98,6 +100,8 @@ contract Reservation {
             company: _userCompany,
             set: true
         });
+
+        usersCount++;
     }
 
     function addRoom(string memory _name) private {
@@ -171,6 +175,7 @@ contract Reservation {
         return true;
     }
 
+    // NOTE: Get availability for a given room and date.
     function getAvailability(uint256 _roomId, uint256 _startDate)
         public
         view
