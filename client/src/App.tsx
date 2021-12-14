@@ -5,18 +5,13 @@ import {
   Redirect,
   Switch
 } from 'react-router-dom';
-
+import { drizzleReactHooks } from '@drizzle/react-plugin';
 import Availabilities from './views/availabilities';
 
-
-import { drizzleReactHooks } from '@drizzle/react-plugin';
-
 const App = () => {
-  const drizzleState = drizzleReactHooks.useDrizzleState(drizzleState => ({
+  const drizzleState = drizzleReactHooks.useDrizzleState((drizzleState: any) => ({
     accounts: drizzleState.accounts
   }));
-
-  const { drizzle } = drizzleReactHooks.useDrizzle();
 
   return (
     <Router>
@@ -24,7 +19,7 @@ const App = () => {
         <Route exact path="/">
           <Redirect to="/availabilities" />
         </Route>
-        <Route exact path="/availabilities" component={() => <Availabilities drizzle={drizzle} drizzleState={drizzleState} />} />
+        <Route exact path="/availabilities" component={() => <Availabilities drizzleState={drizzleState} />} />
       </Switch>
     </Router>
   )
