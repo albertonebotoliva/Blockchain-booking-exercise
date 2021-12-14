@@ -6,7 +6,7 @@ import {
   Switch
 } from 'react-router-dom';
 import { drizzleReactHooks } from '@drizzle/react-plugin';
-import Availabilities from './views/availabilities';
+import Availabilities from './views';
 
 const App = () => {
   const drizzleState = drizzleReactHooks.useDrizzleState((drizzleState: any) => ({
