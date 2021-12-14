@@ -2,6 +2,7 @@ pragma solidity >=0.4.22 <0.9.0;
 
 contract Reservation {
     uint256 public maxRooms = 20;
+    uint256 public maxSlots = 24;
     uint256 public maxBookingsPerCompany = 10;
 
     struct User {
@@ -16,34 +17,77 @@ contract Reservation {
     }
 
     struct Booking {
-        uint256 id;
         address user;
         uint256 roomId;
-        uint256 startDate;
-        bool cancelled;
+        string company;
+        string day; // String of the selected day
+        string hour; // String with the slot
+        bool isBooked;
     }
+
+    string[24] slots = [
+        "00:00",
+        "01:00",
+        "02:00",
+        "03:00",
+        "04:00",
+        "05:00",
+        "06:00",
+        "07:00",
+        "08:00",
+        "09:00",
+        "10:00",
+        "11:00",
+        "12:00",
+        "13:00",
+        "14:00",
+        "15:00",
+        "16:00",
+        "17:00",
+        "18:00",
+        "19:00",
+        "20:00",
+        "21:00",
+        "22:00",
+        "23:00"
+    ];
 
     mapping(address => User) public users;
     uint256 public usersCount;
-    mapping(string => uint256) public companyBookingsCount;
-    mapping(uint256 => Booking) public bookings;
-    uint256 public bookingsCount;
     mapping(uint256 => Room) public rooms;
     uint256 public roomsCount;
 
+    // ROOM - DAY - HOUR
+    mapping(uint256 => mapping(string => mapping(string => Booking)))
+        public bookings;
+    // COMPANY - DAY - HOUR
+    mapping(string => mapping(string => mapping(string => uint256)))
+        public bookingsCount;
+
     event RoomAdded(uint256 id, string name);
-    event BookingCancelled(uint256 id, address user);
-    event BookingAdded(
-        uint256 id,
+    event BookingCancelled(
         address user,
         uint256 roomId,
-        uint256 startDate
+        string company,
+        string day,
+        string hour,
+        bool isBooked
+    );
+    event BookingAdded(
+        address user,
+        uint256 roomId,
+        string company,
+        string day,
+        string hour,
+        bool isBooked
     );
     event BookingFailed(
-        uint256 id,
         address user,
         uint256 roomId,
-        uint256 startDate
+        string company,
+        string day,
+        string hour,
+        bool isBooked
     );
 
     function append(string memory a, string memory b)
@@ -74,13 +118,20 @@ contract Reservation {
     }
 
     constructor() {
-        bookingsCount = 0;
         roomsCount = 0;
         usersCount = 0;
 
         // NOTE: We assume that exists an external service registering users.
-        createUser(0, 0x2cDB90d0F33FDE3c8802B021452cCfe5e1d25574, "CocaCola");
-        createUser(1, 0xa4387a7E4e854DA0c83ADCC9514eBe581DCe85D4, "PepsiCola");
+        createUser(0, 0xB1E2cc5abb7a289060e85D156B039f9b0b81eF39, "CocaCola");
+        createUser(1, 0x781b25dda486994bEA9eAD7f9C90fFB001816944, "CocaCola");
+        createUser(2, 0x95cc8b1391664bDB54d262618bbf3f89b7644551, "CocaCola");
+        createUser(3, 0xDA9967309B1a83E6286fC8117fC519847e2Cc858, "CocaCola");
+        createUser(4, 0x38753DF5003429CA9FF2Cc229C4dA70A639e4Ad1, "CocaCola");
+        createUser(5, 0xA559396f98ff5b9aec965934E077b79BDe0E2e16, "PepsiCola");
+        createUser(6, 0xa66Cac55f34C1705D6c6Ca8c8F482D019e30f2A6, "PepsiCola");
+        createUser(7, 0x9A4b515B2b9362766F34126555503912C1775771, "PepsiCola");
+        createUser(8, 0xF59515Fb5B4fcaad851972EB4b3Bd18fE3C17253, "PepsiCola");
+        createUser(9, 0x70E1b47C4EE2353d0148De9cdDd6f797E7ec7CC6, "PepsiCola");
 
         for (uint256 i = 0; i < maxRooms; i++) {
             addRoom(append("Room ", toString(i)));
@@ -111,110 +162,98 @@ contract Reservation {
         emit RoomAdded(roomsCount, _name);
     }
 
-    function addBooking(uint256 _roomId, uint256 _startDate) public {
-        require(
-            companyBookingsCount[users[msg.sender].company] <
-                maxBookingsPerCompany
-        );
-        if (!_isRoomBooked(_roomId, _startDate)) {
-            bookings[bookingsCount] = Booking(
-                bookingsCount,
+    function addBooking(
+        uint256 _roomId,
+        string memory _day,
+        string memory _hour
+    ) public {
+        if (
+            _isRoomAvailable(_roomId, _day, _hour) &&
+            bookingsCount[users[msg.sender].company][_day][_hour] <
+            maxBookingsPerCompany
+        ) {
+            bookings[_roomId][_day][_hour] = Booking(
                 msg.sender,
                 _roomId,
-                _startDate,
-                false
+                users[msg.sender].company,
+                _day,
+                _hour,
+                true
             );
-            bookingsCount++;
-            companyBookingsCount[users[msg.sender].company]++;
 
-            emit BookingAdded(bookingsCount, msg.sender, _roomId, _startDate);
+            bookingsCount[users[msg.sender].company][_day][_hour]++;
+
+            emit BookingAdded(
+                msg.sender,
+                _roomId,
+                users[msg.sender].company,
+                _day,
+                _hour,
+                true
+            );
             return;
         }
-        emit BookingFailed(bookingsCount, msg.sender, _roomId, _startDate);
+        emit BookingFailed(
+            msg.sender,
+            _roomId,
+            users[msg.sender].company,
+            _day,
+            _hour,
+            false
+        );
     }
 
-    function cancelBooking(uint256 _id) public {
-        require(bookings[_id].user == msg.sender);
-        bookings[_id].cancelled = true;
-        companyBookingsCount[users[msg.sender].company]--;
-        emit BookingCancelled(_id, msg.sender);
-    }
-
-    function _isRoomBooked(uint256 _roomId, uint256 _startDate)
-        private
-        view
-        returns (bool)
-    {
-        for (uint256 i = 0; i < bookingsCount; i++) {
-            if (
-                bookings[i].roomId == _roomId &&
-                !(_isValidTime(bookings[i].startDate, _startDate))
-            ) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    function _isValidTime(uint256 _bookingDate, uint256 _startDate)
-        private
-        pure
-        returns (bool)
-    {
-        uint256 startBookingDate = _bookingDate;
-        uint256 endBookingDate = _bookingDate + 1 hours;
-        uint256 startDate = _startDate;
-        uint256 endDate = _startDate + 1 hours;
-
-        if (
-            (endDate >= startBookingDate && endDate <= endBookingDate) ||
-            (startDate >= startBookingDate && startDate <= endBookingDate)
-        ) {
+    function _isRoomAvailable(
+        uint256 _roomId,
+        string memory _day,
+        string memory _hour
+    ) private view returns (bool) {
+        if (bookings[_roomId][_day][_hour].isBooked) {
             return false;
         }
         return true;
     }
 
-    // NOTE: Get availability for a given room and date.
-    function getAvailability(uint256 _roomId, uint256 _startDate)
-        public
-        view
-        returns (bool)
-    {
-        require(
-            companyBookingsCount[users[msg.sender].company] <
-                maxBookingsPerCompany
+    function cancelBooking(
+        uint256 _roomId,
+        string memory _day,
+        string memory _hour
+    ) public {
+        require(bookings[_roomId][_day][_hour].user == msg.sender);
+        bookings[_roomId][_day][_hour].isBooked = false;
+        bookingsCount[users[msg.sender].company][_day][_hour]--;
+
+        emit BookingCancelled(
+            msg.sender,
+            _roomId,
+            users[msg.sender].company,
+            _day,
+            _hour,
+            false
         );
-        if (!_isRoomBooked(_roomId, _startDate)) {
-            return true;
-        }
-        return false;
     }
 
-    function getRoomBookings(uint256 _roomId)
+    function getAvailabilities(uint256 _roomId, string memory _day)
         public
         view
         returns (Booking[] memory)
     {
-        uint256 resultCount = 0;
+        Booking[] memory availabilities = new Booking[](maxSlots);
 
-        for (uint256 i = 0; i < bookingsCount; i++) {
-            if (bookings[i].roomId == _roomId) {
-                resultCount++;
+        for (uint256 i = 0; i < slots.length; i++) {
+            if (bookings[_roomId][_day][slots[i]].isBooked) {
+                availabilities[i] = bookings[_roomId][_day][slots[i]];
+            } else {
+                availabilities[i] = Booking(
+                    address(0),
+                    _roomId,
+                    "",
+                    _day,
+                    slots[i],
+                    false
+                );
             }
         }
-
-        Booking[] memory result = new Booking[](resultCount);
-
-        uint256 j;
-
-        for (uint256 i = 0; i < bookingsCount; i++) {
-            if (bookings[i].roomId == _roomId) {
-                result[j] = bookings[i];
-                j++;
-            }
-        }
-
-        return result;
+        return availabilities;
     }
 }
