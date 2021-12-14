@@ -3,11 +3,26 @@ import ReactDOM from 'react-dom';
 import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
+import { Drizzle, generateStore } from '@drizzle/store';
+import { drizzleReactHooks } from '@drizzle/react-plugin';
+import Reservation from './artifacts/Reservation.json';
+
+const options = { contracts: [Reservation] };
+const drizzleStore = generateStore(options as any);
+const drizzle = new Drizzle(options as any, drizzleStore);
 
 ReactDOM.render(
   <React.StrictMode>
-    <App />
-  </React.StrictMode>,
+    <drizzleReactHooks.DrizzleProvider drizzle={drizzle}>
+      <drizzleReactHooks.Initializer
+        error="There was an error."
+        loadingContractsAndAccounts="Loading Contracts and Accounts."
+        loadingWeb3="Loading Web3."
+      >
+        <App />
+      </drizzleReactHooks.Initializer>
+    </drizzleReactHooks.DrizzleProvider>
+  </React.StrictMode >,
   document.getElementById('root')
 );
 
