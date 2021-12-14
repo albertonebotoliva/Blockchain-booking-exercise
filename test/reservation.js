@@ -12,23 +12,23 @@ contract("Reservation", function (accounts) {
     it("initializes with 0 bookings", function () {
         return Reservation.deployed()
             .then(function (instance) {
-                return instance.bookingsCount();
+                return instance.bookingsCount(0, '26/05/1980', '00:00');
             }).then(function (count) {
                 assert.equal(count, 0);
             });
     });
-    it("initializes with 2 fake users", function () {
+    it("initializes with 10 fake users", function () {
         return Reservation.deployed()
             .then(function (instance) {
                 return instance.usersCount();
             }).then(function (count) {
-                assert.equal(count, 2);
+                assert.equal(count, 10);
             });
     });
     it("initializes with 1 fake users from CocaCola", function () {
         return Reservation.deployed()
             .then(function (instance) {
-                return instance.users("0x2cDB90d0F33FDE3c8802B021452cCfe5e1d25574");
+                return instance.users("0xB1E2cc5abb7a289060e85D156B039f9b0b81eF39");
             }).then(function (user) {
                 assert.equal(user[1], "CocaCola");
             });
@@ -36,7 +36,7 @@ contract("Reservation", function (accounts) {
     it("initializes with 1 fake users from PepsiCola", function () {
         return Reservation.deployed()
             .then(function (instance) {
-                return instance.users("0xa4387a7E4e854DA0c83ADCC9514eBe581DCe85D4");
+                return instance.users("0xA559396f98ff5b9aec965934E077b79BDe0E2e16");
             }).then(function (user) {
                 assert.equal(user[1], "PepsiCola");
             });
@@ -45,26 +45,13 @@ contract("Reservation", function (accounts) {
         return Reservation.deployed()
             .then(function (instance) {
                 reservationInstance = instance;
-                return reservationInstance.addBooking(0, 1638976199);
+                return reservationInstance.addBooking(0, '26/05/1980', '00:00');
             })
-            .then(function (booking) {
-                return reservationInstance.bookingsCount();
+            .then(function () {
+                return reservationInstance.users(accounts[0]);
             })
-            .then(function (count) {
-                assert.equal(count, 1);
-            });
-    });
-    it("Add only one booking if timestamp difference < 1 hour", function () {
-        return Reservation.deployed()
-            .then(function (instance) {
-                reservationInstance = instance;
-                return reservationInstance.addBooking(0, 1638976199);
-            })
-            .then(function (booking) {
-                return reservationInstance.addBooking(0, 1638976200);
-            })
-            .then(function (booking) {
-                return reservationInstance.bookingsCount();
+            .then(function (user) {
+                return reservationInstance.bookingsCount(user.company, '26/05/1980', '00:00');
             })
             .then(function (count) {
                 assert.equal(count, 1);
@@ -74,17 +61,75 @@ contract("Reservation", function (accounts) {
         return Reservation.deployed()
             .then(function (instance) {
                 reservationInstance = instance;
-                return reservationInstance.addBooking(0, 1638976199);
+                return reservationInstance.addBooking(0, '26/05/1980', '00:00');
             })
-            .then(function (instance) {
-                return reservationInstance.cancelBooking(0);
+            .then(function () {
+                return reservationInstance.cancelBooking(0, '26/05/1980', '00:00');
             })
-            .then(function (booking) {
-                return reservationInstance.bookingsCount();
+            .then(function () {
+                return reservationInstance.users(accounts[0]);
+            })
+            .then(function (user) {
+                return reservationInstance.bookingsCount(user.company, '26/05/1980', '00:00');
             })
             .then(function (count) {
-                assert.equal(count, 1);
+                assert.equal(count, 0);
             });
     });
-
+    it("Limit to 10 bookings by company and hour", function () {
+        return Reservation.deployed()
+            .then(function (instance) {
+                reservationInstance = instance;
+                return reservationInstance.addBooking(0, '26/05/1980', '00:00');
+            })
+            .then(function () {
+                return reservationInstance.addBooking(1, '26/05/1980', '00:00');
+            })
+            .then(function () {
+                return reservationInstance.addBooking(2, '26/05/1980', '00:00');
+            })
+            .then(function () {
+                return reservationInstance.addBooking(3, '26/05/1980', '00:00');
+            })
+            .then(function () {
+                return reservationInstance.addBooking(4, '26/05/1980', '00:00');
+            })
+            .then(function () {
+                return reservationInstance.addBooking(5, '26/05/1980', '00:00');
+            })
+            .then(function () {
+                return reservationInstance.addBooking(6, '26/05/1980', '00:00');
+            })
+            .then(function () {
+                return reservationInstance.addBooking(7, '26/05/1980', '00:00');
+            })
+            .then(function () {
+                return reservationInstance.addBooking(8, '26/05/1980', '00:00');
+            })
+            .then(function () {
+                return reservationInstance.addBooking(9, '26/05/1980', '00:00');
+            })
+            .then(function () {
+                return reservationInstance.addBooking(10, '26/05/1980', '00:00');
+            })
+            .then(function () {
+                return reservationInstance.users(accounts[0]);
+            })
+            .then(function (user) {
+                return reservationInstance.bookingsCount(user.company, '26/05/1980', '00:00');
+            })
+            .then(function (count) {
+                assert.equal(count, 10);
+            });
+    });
+    it("Get Availabilities return 24 hours", function () {
+        return Reservation.deployed()
+            .then(function (instance) {
+                reservationInstance = instance;
+                return reservationInstance.getAvailabilities(0, '26/05/1980');
+            })
+            .then(function (availabilities) {
+                assert.equal(availabilities.length, 24);
+            });
+    });
 });
