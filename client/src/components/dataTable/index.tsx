@@ -8,18 +8,6 @@ import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Button from '@mui/material/Button';
 import Icon from '@mui/material/Icon';
-import { drizzleReactHooks } from '@drizzle/react-plugin';
-
-export namespace DataTable {
-  export interface Props {
-    user: string,
-    selectedDay: string,
-    selectedRoom: {
-      id: number,
-      name: string
-    }
-  }
-}
 
 const useStyles = makeStyles(() => ({
   minWidth: {
@@ -47,12 +35,25 @@ const useStyles = makeStyles(() => ({
   }
 }));
 
-export default function DataTable({ user, selectedDay, selectedRoom }: DataTable.Props) {
+export namespace DataTable {
+  export interface Props {
+    availabilities: any,
+    addBooking: any,
+    cancelBooking: any,
+    transactionAdd: any,
+    transactionCancel: any,
+    user: string,
+    selectedDay: string,
+    selectedRoom: {
+      id: number,
+      name: string
+    }
+  }
+}
+
+export default function DataTable({ user, selectedDay, selectedRoom, availabilities, addBooking, cancelBooking, transactionAdd, transactionCancel }: DataTable.Props) {
   const classes = useStyles();
-  const { useCacheCall, useCacheSend } = drizzleReactHooks.useDrizzle();
-  const { send: cancelBooking, TXObjects: transactionCancel } = useCacheSend('Reservation', 'cancelBooking');
-  const { send: addBooking, TXObjects: transactionAdd } = useCacheSend('Reservation', 'addBooking');
-  const availabilities = useCacheCall('Reservation', 'getAvailabilities', selectedRoom.id, selectedDay);
+
   type TBooking = {
     room: number,
     day: string,
@@ -101,7 +102,7 @@ export default function DataTable({ user, selectedDay, selectedRoom }: DataTable
       </TableHead>
       <TableBody>
         {availabilities?.map((availability: TAvailability) => (
-          <TableRow key={availability.hour} >
+          <TableRow key={`${selectedRoom.name}-${availability.hour}`} >
             <TableCell className={classes.hour}><small>{availability.hour}</small></TableCell>
             <TableCell sx={{ textAlign: 'right' }} className={classes.actionArea}>
               {availability.isBooked && availability.user !== user && <Booked company={availability.company} />}

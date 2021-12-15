@@ -1,5 +1,4 @@
 import React from 'react';
-import { drizzleReactHooks } from '@drizzle/react-plugin';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import ListItemButton from '@mui/material/ListItemButton';
@@ -11,11 +10,11 @@ export namespace RoomList {
     export interface Props {
         rooms: Array<number | never>,
         setSelectedRoom: (room: any) => void
+        useCacheCall: any
     }
 }
 
-function RoomList({ rooms, setSelectedRoom }: RoomList.Props): JSX.Element {
-    const { useCacheCall } = drizzleReactHooks.useDrizzle();
+function RoomList({ rooms, setSelectedRoom, useCacheCall }: RoomList.Props): JSX.Element {
     const Room = ({ index }: { index: number }) => {
         const room = useCacheCall('Reservation', 'rooms', index);
         return room
@@ -32,7 +31,7 @@ function RoomList({ rooms, setSelectedRoom }: RoomList.Props): JSX.Element {
     return (
         <List>
             {rooms?.map((_, index) =>
-                <Room index={index} />
+                <Room index={index} key={`Room-${index}`} />
             )}
         </List>
     )
