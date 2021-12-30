@@ -5,7 +5,7 @@ import App from './App';
 import reportWebVitals from './reportWebVitals';
 import { Drizzle, generateStore } from '@drizzle/store';
 import { drizzleReactHooks } from '@drizzle/react-plugin';
-import Reservation from './artifacts/Reservation.json';
+import Reservation from './contracts/Reservation.json';
 
 const options = { contracts: [Reservation] };
 const drizzleStore = generateStore(options as any);
