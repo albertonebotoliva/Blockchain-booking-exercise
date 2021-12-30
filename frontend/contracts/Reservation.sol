@@ -203,17 +203,6 @@ contract Reservation {
         );
     }
 
-    function _isRoomAvailable(
-        uint256 _roomId,
-        string memory _day,
-        string memory _hour
-    ) private view returns (bool) {
-        if (bookings[_roomId][_day][_hour].isBooked) {
-            return false;
-        }
-        return true;
-    }
-
     function cancelBooking(
         uint256 _roomId,
         string memory _day,
@@ -255,5 +244,16 @@ contract Reservation {
             }
         }
         return availabilities;
+    }
+
+    function _isRoomAvailable(
+        uint256 _roomId,
+        string memory _day,
+        string memory _hour
+    ) private view returns (bool) {
+        if (bookings[_roomId][_day][_hour].isBooked) {
+            return false;
+        }
+        return true;
     }
 }

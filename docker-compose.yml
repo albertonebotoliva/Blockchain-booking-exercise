@@ -1,0 +1,34 @@
+version: '3'
+
+services:
+  # ganachecli: simulated test rpc on dev environment
+  ganache-cli:
+    container_name: ganache-cli
+    build:
+      context: ./ganache
+    ports:
+      - 8545:8545
+
+  frontend:
+    container_name: frontend
+    build:
+      context: frontend
+    healthcheck:
+      test: curl -sf -X POST --data
+        '{"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id":1}'
+        localhost:8545
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    command: >
+      sh -c "truffle compile &&
+             truffle test &&
+             truffle migrate &&
+             cp -R output/contracts client/src/contracts/ &&
+             cd client &&
+             npm start"
+    ports:
+      - 3000:3000
+    tty: true
+    volumes:
+      - ./frontend/client/src:/client/src
