@@ -251,10 +251,6 @@ contract Reservation {
         string memory _day,
         string memory _hour
     ) private view returns (bool) {
-        // TODO: Return condition
-        if (bookings[_roomId][_day][_hour].isBooked) {
-            return false;
-        }
-        return true;
+        return !bookings[_roomId][_day][_hour].isBooked;
     }
 }
