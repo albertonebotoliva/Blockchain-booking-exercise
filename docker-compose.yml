@@ -24,7 +24,7 @@ services:
       sh -c "truffle compile &&
              truffle test &&
              truffle migrate &&
-             cp -R output/contracts client/src/contracts/ &&
+             cp -R output/contracts client/src/ &&
              cd client &&
              npm start"
     ports:
